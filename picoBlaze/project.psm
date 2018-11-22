@@ -3,61 +3,63 @@ lcd              DSIO       $30
 lcd_control      DSIO       $31
 int_status       DSIO       $E0
 int_mask         DSIO       $E1
-ps2_out          DSOUT      $70
-ps2              DSIN       $70
+ps2              DSIO       $70
 ps2_int_edge     DSIO       $71
 ps2_int_value    DSIO       $72
 ps2_int_mask     DSIO       $73
+led              DSIO       00
 
 EINT                                                   ; enable interrupt system
 
-;global interrupts
+LOAD    s0,      97
+STORE   s0,      $1C
+FETCH   s1,      $1C
+OUT     s1,      led
+
+; global interrupts
 LOAD    s0,      2                                     ; prepare interrupt for PS/2
 OUT     s0,      int_mask                              ; enable intterupts
 
-;local interrupts
-LOAD    s0,      1                                     ; edge interrupt
+; local interrupts
+LOAD    s0,      3                                     ; native state of voltage line(high)
+OUT     s0,      ps2
+LOAD    s0,      1                                     ; edge interrupt for clock
 OUT     s0,      ps2_int_edge                          ; set interrupting on edge
-OUT     s0,      ps2_int_value                         ; set interrupting on increasing edge
-LOAD    s0,      2                                     ; prepare interrupt mask for incoming data
+LOAD    s0,      0
+OUT     s0,      ps2_int_value                         ; set interrupting on decreasing edge
+LOAD    s0,      1                                     ; prepare interrupt mask for clock
 OUT     s0,      ps2_int_mask                          ; enable interrupt for PS/2
 
-;initialize display
+; initialize display
 LOAD    s0,      $38
 
 OUT     s0,      lcd
 CALL    handleE
 CALL    delay5m
 
-
 OUT     s0,      lcd
 CALL    handleE
 CALL    delay40u
 CALL    delay40u
 CALL    delay40u
 
-
 OUT     s0,      lcd
 CALL    handleE
 CALL    delay40u
 
-
 OUT     s0,      lcd
 CALL    handleE
 CALL    delay40u
-
 
 LOAD    s0,      $06
 OUT     s0,      lcd
 CALL    handleE
 CALL    delay40u
 
-
 LOAD    s0,      $0e
 OUT     s0,      lcd
 CALL    handleE
 CALL    delay40u
-
 
 LOAD    s0,      $01
 OUT     s0,      lcd
@@ -65,16 +67,15 @@ CALL    handleE
 CALL    delay5m
 CALL    fLine
 
+LOAD s8, 0
+LOAD sA, 0
+
 et:
         JUMP     et
-          
-
 
 delay1m:
         LOAD     sF,      26
-        
 
-       
 wait1m:
         CALL     delay40u
         SUB      sF,      1
@@ -91,7 +92,7 @@ delay5m:
 
 delay1u:
         LOAD     sE,      24
-       
+
 wait1u:
         SUB      sE,      1
         JUMP     NZ,      wait1u
@@ -100,13 +101,13 @@ wait1u:
 
 delay40u:
         LOAD     sD,      36
-        
+
 wait40u:
         CALL     delay1u
         SUB      sD,      1
         JUMP     NZ,      wait40u
         RET
-        
+
 secLine:
         LOAD     s0,      $C0
         OUT      s0,      lcd
@@ -139,9 +140,44 @@ handleERS:
         RET
 
 handleInt:
+        ADD      s8,      1
+        COMP     s8,      1
+        JUMP     Z,       ed
+
+        COMP     s8,      10
+        JUMP     Z,       ed
+
+        COMP     s8,      11
+        JUMP     Z,       display
+        
+        IN       s9,      ps2
+        SR0      s9
+        COMP     s9,      1
+        JUMP     NZ,      mov0
+        SR1      sA
+        JUMP     ed
+mov0:
+        SR0      sA
+        JUMP     ed
+display:
+        COMP     sA,      $F0
+        JUMP     Z,       released
+        FETCH    s6,      sA
+		COMP     s6,      0
+		JUMP     Z,       ed
+        OUT      s6,      led
+        OUT      s6,      lcd
+        CALL     handleERS
+        CALL     delay40u
+        LOAD     sA,      0
+        LOAD     s8,      0
+        JUMP     ed
+released:
+        LOAD     sB,      1 ; sB flaga puszczenia
+ed:
+        LOAD     s3,      0
+        OUT      s3,      int_status
         RETI     ENABLE
-
-
 
 ORG     $3FF
 JUMP    handleInt
