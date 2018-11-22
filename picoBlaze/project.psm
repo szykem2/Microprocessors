@@ -163,8 +163,8 @@ display:
         COMP     sA,      $F0
         JUMP     Z,       released
         FETCH    s6,      sA
-		COMP     s6,      0
-		JUMP     Z,       ed
+        COMP     s6,      0
+        JUMP     Z,       ed
         OUT      s6,      led
         OUT      s6,      lcd
         CALL     handleERS
