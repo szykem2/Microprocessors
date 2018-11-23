@@ -176,11 +176,25 @@ display:
         JUMP     Z,       btnReleased
         COMP     decoded, $F0
         JUMP     Z,       released
+        COMP     special, 1
+        JUMP     Z,       handleSpecial
         COMP     decoded, $E0
         JUMP     Z,       specialKey
         COMP     decoded, $58
         JUMP     Z,       capsLock
-        
+        COMP     decoded, $66
+        JUMP     Z,       backspace
+        COMP     decoded, $59
+        JUMP     Z,       pshift
+        COMP     decoded, $59
+        JUMP     Z,       pshift
+        COMP     decoded, $5A
+        JUMP     Z,       enter
+        COMP     decoded, $76
+        JUMP     Z,       escape
+        COMP     decoded, $77
+        JUMP     Z,       numlock
+lcd_out:
         FETCH    s4,      decoded
         COMP     s4,      0
         JUMP     Z,       ed
@@ -194,10 +208,62 @@ display:
         LOAD     int_cnt, 0
         JUMP     ed
 specialKey:
-        LOAD    special, 1
+        LOAD     special, 1
+        JUMP     ed
+handleSpecial:
+        COMP     decoded, $5A
+        JUMP     Z,       enter
+        COMP     decoded, $69
+        JUMP     Z,       pend
+        COMP     decoded, $6C
+        JUMP     Z,       home
+        COMP     decoded, $71
+        JUMP     Z,       delete
+        COMP     decoded, $74
+        JUMP     Z,       curtsorUp
+        COMP     decoded, $72
+        JUMP     Z,       cursorDown
+        COMP     decoded, $6B
+        JUMP     Z,       cursorLeft
+        COMP     decoded, $74
+        JUMP     Z,       cursorRigth
+        COMP     decoded, $7D
+        JUMP     Z,       pageup
+        COMP     decoded, $7A
+        JUMP     Z,       pagedown
+
+        JUMP     ed
+escape:
+        JUMP     ed  
+pshift:
+        JUMP     ed
+numLock:
         JUMP     ed
 capsLock:
-        XOR      caps, 1
+        XOR      caps,    1
+        JUMP     ed
+delete:
+        JUMP     ed
+backspace:
+        JUMP     ed
+enter:
+        JUMP     cursorMoved
+home:
+        JUMP     cursorMoved
+pend:
+        JUMP     cursorMoved
+cursorLeft:
+        JUMP     cursorMoved
+cursorRigth:
+        JUMP     cursorMoved
+pageup:
+pagedown:
+curtsorUp:
+cursorDown:
+        JUMP     cursorMoved
+cursorMoved:
+        call handleE
+        call delay40u
         JUMP     ed
 btnReleased:
         COMP     shift,   1
