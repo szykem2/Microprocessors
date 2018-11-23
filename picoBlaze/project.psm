@@ -197,19 +197,20 @@ display:
 lcd_out:
         FETCH    s4,      decoded
         COMP     s4,      0
-        JUMP     Z,       ed
+        JUMP     Z,       zero
         CALL     upperCase
         
         OUT      s4,      led
         OUT      s4,      lcd
         CALL     handleERS
         CALL     delay40u
+zero:
         LOAD     decoded, 0
         LOAD     int_cnt, 0
         JUMP     ed
 specialKey:
         LOAD     special, 1
-        JUMP     ed
+        JUMP     zero
 handleSpecial:
         COMP     decoded, $5A
         JUMP     Z,       enter
@@ -232,20 +233,20 @@ handleSpecial:
         COMP     decoded, $7A
         JUMP     Z,       pagedown
 
-        JUMP     ed
+        JUMP     zero
 escape:
-        JUMP     ed  
+        JUMP     zero
 pshift:
-        JUMP     ed
+        JUMP     zero
 numLock:
-        JUMP     ed
+        JUMP     zero
 capsLock:
         XOR      caps,    1
-        JUMP     ed
+        JUMP     zero
 delete:
-        JUMP     ed
+        JUMP     zero
 backspace:
-        JUMP     ed
+        JUMP     zero
 enter:
         JUMP     cursorMoved
 home:
@@ -264,14 +265,14 @@ cursorDown:
 cursorMoved:
         call handleE
         call delay40u
-        JUMP     ed
+        JUMP     zero
 btnReleased:
         COMP     shift,   1
         JUMP     NZ,      ed
         LOAD     shift,   0
         LOAD     btn_rel, 0
         LOAD     special, 0
-        JUMP     ed
+        JUMP     zero
 released:
         LOAD     btn_rel, 1
 ed:
