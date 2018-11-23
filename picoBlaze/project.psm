@@ -201,7 +201,7 @@ capsLock:
         JUMP     ed
 btnReleased:
         COMP     shift,   1
-        JUMP     NZ,       ed
+        JUMP     NZ,      ed
         LOAD     shift,   0
         LOAD     btn_rel, 0
         LOAD     special, 0
@@ -215,7 +215,9 @@ ed:
 
 upperCase:
         ; TODO: implement procedure
-        ; if shift or fla
+        ; if shift or caps flags are set but not both
+        ; different handling for letters, numbers and special characters f. e. . -> >; ' -> "
+        
         RET
         
         
