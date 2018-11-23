@@ -172,17 +172,39 @@ mov0:
         SR0      decoded
         JUMP     ed
 display:
+        COMP     btn_rel, 1
+        JUMP     Z,       btnReleased
         COMP     decoded, $F0
         JUMP     Z,       released
+        COMP     decoded, $E0
+        JUMP     Z,       specialKey
+        COMP     decoded, $58
+        JUMP     Z,       capsLock
+        
         FETCH    s4,      decoded
         COMP     s4,      0
         JUMP     Z,       ed
+        CALL     upperCase
+        
         OUT      s4,      led
         OUT      s4,      lcd
         CALL     handleERS
         CALL     delay40u
         LOAD     decoded, 0
         LOAD     int_cnt, 0
+        JUMP     ed
+specialKey:
+        LOAD    special, 1
+        JUMP     ed
+capsLock:
+        XOR      caps, 1
+        JUMP     ed
+btnReleased:
+        COMP     shift,   1
+        JUMP     NZ,       ed
+        LOAD     shift,   0
+        LOAD     btn_rel, 0
+        LOAD     special, 0
         JUMP     ed
 released:
         LOAD     btn_rel, 1
@@ -191,5 +213,11 @@ ed:
         OUT      s3,      int_status
         RETI     ENABLE
 
+upperCase:
+        ; TODO: implement procedure
+        ; if shift or fla
+        RET
+        
+        
 ORG     $3FF
 JUMP    handleInt
