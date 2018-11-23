@@ -18,6 +18,8 @@ num              EQU        sA                         ; num lock
 btn_rel          EQU        s9                         ; button released
 int_cnt          EQU        s8                         ; interrupt counter
 decoded          EQU        s7                         ; decoded value
+cursor           EQU        s6                         ; cursor position
+special          EQU        s5                         ; special character enter, home etc.
 
 EINT                                                   ; enable interrupt system
 
@@ -172,11 +174,11 @@ mov0:
 display:
         COMP     decoded, $F0
         JUMP     Z,       released
-        FETCH    s6,      decoded
-        COMP     s6,      0
+        FETCH    s4,      decoded
+        COMP     s4,      0
         JUMP     Z,       ed
-        OUT      s6,      led
-        OUT      s6,      lcd
+        OUT      s4,      led
+        OUT      s4,      lcd
         CALL     handleERS
         CALL     delay40u
         LOAD     decoded, 0
