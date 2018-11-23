@@ -1,4 +1,5 @@
 MEM "project.mem"                                      ; dump memory
+; open ports
 lcd              DSIO       $30
 lcd_control      DSIO       $31
 int_status       DSIO       $E0
@@ -8,6 +9,15 @@ ps2_int_edge     DSIO       $71
 ps2_int_value    DSIO       $72
 ps2_int_mask     DSIO       $73
 led              DSIO       00
+
+; rename registers
+; registers sF, sE, sD are reserved for delays
+shift            EQU        sC                         ; shift pressed
+caps             EQU        sB                         ; caps lock
+num              EQU        sA                         ; num lock
+btn_rel          EQU        s9                         ; button released
+int_cnt          EQU        s8                         ; interrupt counter
+decoded          EQU        s7                         ; decoded value
 
 EINT                                                   ; enable interrupt system
 
@@ -140,40 +150,40 @@ handleERS:
         RET
 
 handleInt:
-        ADD      s8,      1
-        COMP     s8,      1
+        ADD      int_cnt, 1
+        COMP     int_cnt, 1
         JUMP     Z,       ed
 
-        COMP     s8,      10
+        COMP     int_cnt, 10
         JUMP     Z,       ed
 
-        COMP     s8,      11
+        COMP     int_cnt, 11
         JUMP     Z,       display
         
-        IN       s9,      ps2
-        SR0      s9
-        COMP     s9,      1
+        IN       s1,      ps2
+        SR0      s1
+        COMP     s1,      1
         JUMP     NZ,      mov0
-        SR1      sA
+        SR1      decoded
         JUMP     ed
 mov0:
-        SR0      sA
+        SR0      decoded
         JUMP     ed
 display:
-        COMP     sA,      $F0
+        COMP     decoded, $F0
         JUMP     Z,       released
-        FETCH    s6,      sA
+        FETCH    s6,      decoded
         COMP     s6,      0
         JUMP     Z,       ed
         OUT      s6,      led
         OUT      s6,      lcd
         CALL     handleERS
         CALL     delay40u
-        LOAD     sA,      0
-        LOAD     s8,      0
+        LOAD     decoded, 0
+        LOAD     int_cnt, 0
         JUMP     ed
 released:
-        LOAD     sB,      1 ; sB flaga puszczenia
+        LOAD     btn_rel, 1
 ed:
         LOAD     s3,      0
         OUT      s3,      int_status
