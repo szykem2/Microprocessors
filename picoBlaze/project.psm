@@ -206,7 +206,7 @@ lcd_out:
         COMP     s4,      66
         JUMP     NZ,      llend
         LOAD     s3,      0
-		STORE    s3,      3
+        STORE    s3,      3
         CALL     code
         JUMP     lend
         
@@ -214,7 +214,7 @@ lcd_out:
         COMP     s4,      67
         JUMP     NZ,      lend
         LOAD     s3,      1
-		STORE    s3,      3
+        STORE    s3,      3
         CALL     code
         
         lend:
@@ -258,58 +258,58 @@ handleSpecial:
 
         JUMP     zero
 escape:
-	    LOAD     s2,     1
-	    OUT      s2,     lcd
-	    CALL     handleE
+        LOAD     s2,     1
+        OUT      s2,     lcd
+        CALL     handleE
         JUMP     zero
 pshift:
-	    COMP     btn_rel, 1
-	    JUMP     NZ,      el
-	    LOAD     shift,   0
-	    JUMP     zero
-	    el:
-	    LOAD     shift,   1
+        COMP     btn_rel, 1
+        JUMP     NZ,      el
+        LOAD     shift,   0
+        JUMP     zero
+        el:
+        LOAD     shift,   1
         JUMP     zero
 numLock:
-	    XOR      num,     1
+        XOR      num,     1
         JUMP     zero
 capsLock:
         XOR      caps,    1
         JUMP     zero
 delete:
-	    ; TODO: implement
+        ; TODO: implement
         JUMP     zero
 backspace:
-	    ; TODO: implement
+        ; TODO: implement
         JUMP     zero
 enter:
-	    ; TODO: implement
+        ; TODO: implement
         JUMP     cursorMoved
 home:
-	    COMP     cursor,  16
-	    JUMP     NC,      hel
-	    CALL     fline
-	    JUMP     cursorMoved
-	    hel:
-	    CALL     secline
+        COMP     cursor,  16
+        JUMP     NC,      hel
+        CALL     fline
+        JUMP     cursorMoved
+        hel:
+        CALL     secline
         JUMP     cursorMoved
 pend:
         COMP     cursor,  16
-	    JUMP     NC,      eel
-	    CALL     secline
-	    JUMP     cursorMoved
-	    eel:
-	    CALL     fline
+        JUMP     NC,      eel
+        CALL     secline
+        JUMP     cursorMoved
+        eel:
+        CALL     fline
         JUMP     cursorMoved
 cursorLeft:
-	    LOAD     s3,      4
-	    STORE    s3,      3
-	    CALL     code
+        LOAD     s3,      4
+        STORE    s3,      3
+        CALL     code
         JUMP     cursorMoved
 cursorRigth:
         LOAD     s3,      5
-	    STORE    s3,      3
-	    CALL     code
+        STORE    s3,      3
+        CALL     code
         JUMP     cursorMoved
 curtsorUp:
         LOAD     s3,      2
@@ -322,15 +322,15 @@ cursorDown:
         CALL     code
 pageup:
 pagedown:
-	    COMP     cursor,  16
-	    JUMP     NC,      cel
-	    ADD      cursor,  16
-	    LOAD     s1,      $80
-	    JUMP     mvcur
-	    cel:
-	    SUB      cursor,  16
-	    LOAD     s1,      $C0
-	    CALL     fline
+        COMP     cursor,  16
+        JUMP     NC,      cel
+        ADD      cursor,  16
+        LOAD     s1,      $80
+        JUMP     mvcur
+        cel:
+        SUB      cursor,  16
+        LOAD     s1,      $C0
+        CALL     fline
         mvcur:
         ADD      s1,      cursor
         OUT      s1,      lcd
@@ -349,7 +349,7 @@ btnReleased:
         JUMP     Z,      bel
         JUMP     zero
         bel:
-		LOAD     shift,   0
+        LOAD     shift,   0
         JUMP     zero
 released:
         LOAD     btn_rel, 1
@@ -367,26 +367,26 @@ upperCase:
         RET
         
 code:
-	    ;TODO: implement code reading
-	    FETCH    s0,      0 ; code status
-	    FETCH    s1,      1 ; code counter
-	    FETCH    s2,      3 ; code argument
-	    
-		COMP     s0,      1
-	    JUMP     Z,       nxt
-	    COMP     s2,      2
-	    JUMP     NZ,      cend
-	    LOAD     s1,      1
-	    STORE    s1,      1
-	    STORE    s1,      0
-	    JUMP     cend
-	    nxt: ; not first symbol
-	    COMP     s1,      1
+        ;TODO: implement code reading
+        FETCH    s0,      0 ; code status
+        FETCH    s1,      1 ; code counter
+        FETCH    s2,      3 ; code argument
+        
+        COMP     s0,      1
+        JUMP     Z,       nxt
+        COMP     s2,      2
+        JUMP     NZ,      cend
+        LOAD     s1,      1
+        STORE    s1,      1
+        STORE    s1,      0
+        JUMP     cend
+        nxt: ; not first symbol
+        COMP     s1,      1
         JUMP     NZ,      el1
         COMP     s2,      2
         JUMP     NZ,      bad
-	    JUMP     codeCont
-	    
+        JUMP     codeCont
+        
         el1:
         COMP     s1,      2
         JUMP     NZ,      el2
@@ -441,21 +441,21 @@ code:
         JUMP     NZ,      bad
         COMP     s2,      0
         JUMP     NZ,      bad
-	    CALL     codeDone
-	    JUMP     bad
+        CALL     codeDone
+        JUMP     bad
         codeCont:
         ADD      s1,      1
         STORE    s1,      1
         JUMP     cend
-	    bad:
-	    LOAD     s1,      0
-	    STORE    s1,      1
-	    STORE    s1,      0
-	    cend:
-	    RET
-	    
+        bad:
+        LOAD     s1,      0
+        STORE    s1,      1
+        STORE    s1,      0
+        cend:
+        RET
+        
 codeDone:
-	    RET
+        RET
         
 ORG     $3FF
 JUMP    handleInt
