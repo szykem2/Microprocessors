@@ -23,9 +23,12 @@ special          EQU        s5                         ; special character enter
 
 EINT                                                   ; enable interrupt system
 
-LOAD    s0,      97
-STORE   s0,      $1C
-FETCH   s1,      $1C
+LOAD    s0,      0
+STORE   s0,      0
+STORE   s0,      1
+STORE   s0,      3
+
+LOAD    s1,      1
 OUT     s1,      led
 
 ; global interrupts
@@ -184,7 +187,7 @@ display:
         JUMP     Z,       capsLock
         COMP     decoded, $66
         JUMP     Z,       backspace
-        COMP     decoded, $59
+        COMP     decoded, $12
         JUMP     Z,       pshift
         COMP     decoded, $59
         JUMP     Z,       pshift
@@ -200,10 +203,30 @@ lcd_out:
         JUMP     Z,       zero
         CALL     upperCase
         
+        COMP     s4,      66
+        JUMP     NZ,      llend
+        LOAD     s3,      0
+		STORE    s3,      3
+        CALL     code
+        JUMP     lend
+        
+        llend:
+        COMP     s4,      67
+        JUMP     NZ,      lend
+        LOAD     s3,      1
+		STORE    s3,      3
+        CALL     code
+        
+        lend:
+        COMP     cursor,  16
+        CALL     z,       secLine
+        COMP     cursor,  32
+        CALL     z,       fLine
         OUT      s4,      led
         OUT      s4,      lcd
         CALL     handleERS
         CALL     delay40u
+        ADD      cursor,  1
 zero:
         LOAD     decoded, 0
         LOAD     int_cnt, 0
@@ -235,46 +258,102 @@ handleSpecial:
 
         JUMP     zero
 escape:
+	    LOAD     s2,     1
+	    OUT      s2,     lcd
+	    CALL     handleE
         JUMP     zero
 pshift:
+	    COMP     btn_rel, 1
+	    JUMP     NZ,      el
+	    LOAD     shift,   0
+	    JUMP     zero
+	    el:
+	    LOAD     shift,   1
         JUMP     zero
 numLock:
+	    XOR      num,     1
         JUMP     zero
 capsLock:
         XOR      caps,    1
         JUMP     zero
 delete:
+	    ; TODO: implement
         JUMP     zero
 backspace:
+	    ; TODO: implement
         JUMP     zero
 enter:
+	    ; TODO: implement
         JUMP     cursorMoved
 home:
+	    COMP     cursor,  16
+	    JUMP     NC,      hel
+	    CALL     fline
+	    JUMP     cursorMoved
+	    hel:
+	    CALL     secline
         JUMP     cursorMoved
 pend:
+        COMP     cursor,  16
+	    JUMP     NC,      eel
+	    CALL     secline
+	    JUMP     cursorMoved
+	    eel:
+	    CALL     fline
         JUMP     cursorMoved
 cursorLeft:
+	    LOAD     s3,      4
+	    STORE    s3,      3
+	    CALL     code
         JUMP     cursorMoved
 cursorRigth:
+        LOAD     s3,      5
+	    STORE    s3,      3
+	    CALL     code
         JUMP     cursorMoved
+curtsorUp:
+        LOAD     s3,      2
+        STORE    s3,      3
+        CALL     code
+        JUMP     pagedown
+cursorDown:
+        LOAD     s3,      3
+        STORE    s3,      3
+        CALL     code
 pageup:
 pagedown:
-curtsorUp:
-cursorDown:
-        JUMP     cursorMoved
+	    COMP     cursor,  16
+	    JUMP     NC,      cel
+	    ADD      cursor,  16
+	    LOAD     s1,      $80
+	    JUMP     mvcur
+	    cel:
+	    SUB      cursor,  16
+	    LOAD     s1,      $C0
+	    CALL     fline
+        mvcur:
+        ADD      s1,      cursor
+        OUT      s1,      lcd
 cursorMoved:
-        call handleE
-        call delay40u
+        CALL     handleE
+        CALL     delay40u
         JUMP     zero
 btnReleased:
-        COMP     shift,   1
-        JUMP     NZ,      ed
-        LOAD     shift,   0
         LOAD     btn_rel, 0
         LOAD     special, 0
+        COMP     shift,   1
+        JUMP     NZ,      zero
+        COMP     decoded, $59
+        JUMP     Z,       bel
+        COMP     decoded, $12
+        JUMP     Z,      bel
+        JUMP     zero
+        bel:
+		LOAD     shift,   0
         JUMP     zero
 released:
         LOAD     btn_rel, 1
+        JUMP     zero
 ed:
         LOAD     s3,      0
         OUT      s3,      int_status
@@ -287,6 +366,96 @@ upperCase:
         
         RET
         
+code:
+	    ;TODO: implement code reading
+	    FETCH    s0,      0 ; code status
+	    FETCH    s1,      1 ; code counter
+	    FETCH    s2,      3 ; code argument
+	    
+		COMP     s0,      1
+	    JUMP     Z,       nxt
+	    COMP     s2,      2
+	    JUMP     NZ,      cend
+	    LOAD     s1,      1
+	    STORE    s1,      1
+	    STORE    s1,      0
+	    JUMP     cend
+	    nxt: ; not first symbol
+	    COMP     s1,      1
+        JUMP     NZ,      el1
+        COMP     s2,      2
+        JUMP     NZ,      bad
+	    JUMP     codeCont
+	    
+        el1:
+        COMP     s1,      2
+        JUMP     NZ,      el2
+        COMP     s2,      3
+        JUMP     NZ,      bad
+        JUMP     codeCont
+
+        el2:
+        COMP     s1,      3
+        JUMP     NZ,      el3
+        COMP     s2,      3
+        JUMP     NZ,      bad
+        JUMP     codeCont
+
+        el3:
+        COMP     s1,      4
+        JUMP     NZ,      el4
+        COMP     s2,      4
+        JUMP     NZ,      bad
+        JUMP     codeCont
+
+        el4:
+        COMP     s1,      5
+        JUMP     NZ,      el5
+        COMP     s2,      5
+        JUMP     NZ,      bad
+        JUMP     codeCont
+
+        el5:
+        COMP     s1,      6
+        JUMP     NZ,      el6
+        COMP     s2,      4
+        JUMP     NZ,      bad
+        JUMP     codeCont
+
+        el6:
+        COMP     s1,      7
+        JUMP     NZ,      el7
+        COMP     s2,      5
+        JUMP     NZ,      bad
+        JUMP     codeCont
+
+        el7:
+        COMP     s1,      8
+        JUMP     NZ,      el8
+        COMP     s2,      1
+        JUMP     NZ,      bad
+        JUMP     codeCont
+
+        el8:
+        COMP     s1,      9
+        JUMP     NZ,      bad
+        COMP     s2,      0
+        JUMP     NZ,      bad
+	    CALL     codeDone
+	    JUMP     bad
+        codeCont:
+        ADD      s1,      1
+        STORE    s1,      1
+        JUMP     cend
+	    bad:
+	    LOAD     s1,      0
+	    STORE    s1,      1
+	    STORE    s1,      0
+	    cend:
+	    RET
+	    
+codeDone:
+	    RET
         
 ORG     $3FF
 JUMP    handleInt
