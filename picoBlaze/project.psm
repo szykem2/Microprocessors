@@ -165,7 +165,7 @@ handleInt:
 
         COMP     int_cnt, 11
         JUMP     Z,       display
-        
+
         IN       s1,      ps2
         SR0      s1
         COMP     s1,      1
@@ -202,23 +202,23 @@ lcd_out:
         FETCH    s4,      decoded
         COMP     s4,      0
         JUMP     Z,       zero
-        
-        
+
+
         COMP     s4,      66
         JUMP     NZ,      llend
         LOAD     s3,      0
-		STORE    s3,      3
+        STORE    s3,      3
         CALL     code
         JUMP     lend
         llend:
-        
+
         COMP     s4,      67
         JUMP     NZ,      lend
         LOAD     s3,      1
-		STORE    s3,      3
+        STORE    s3,      3
         CALL     code
         lend:
-        
+
         CALL     upperCase
         COMP     cursor,  16
         CALL     z,       secLine
@@ -260,20 +260,20 @@ handleSpecial:
 
         JUMP     zero
 escape:
-	    LOAD     s2,     1
-	    OUT      s2,     lcd
-	    CALL     handleE
+        LOAD     s2,     1
+        OUT      s2,     lcd
+        CALL     handleE
         JUMP     zero
 pshift:
-	    COMP     btn_rel, 1
-	    JUMP     NZ,      el
-	    LOAD     shift,   0
-	    JUMP     zero
-	    el:
-	    LOAD     shift,   1
+        COMP     btn_rel, 1
+        JUMP     NZ,      el
+        LOAD     shift,   0
+        JUMP     zero
+        el:
+        LOAD     shift,   1
         JUMP     zero
 numLock:
-	    XOR      num,     1
+        XOR      num,     1
         JUMP     zero
 capsLock:
         XOR      caps,    1
@@ -290,106 +290,106 @@ delete:
         ADD      cursor,  1
         JUMP     cursorLeft
 backspace:
-	    LOAD     s0,      1
-	    STORE    s0,      5
-	    CALL     cursorLeft
-	    LOAD     s0,      0
-	    STORE    s0,      5
+        LOAD     s0,      1
+        STORE    s0,      5
+        CALL     cursorLeft
+        LOAD     s0,      0
+        STORE    s0,      5
         JUMP     delete
 enter:
-	    LOAD     s0,     cursor
-	    COMP     s0,     16
-	    JUMP     C,      rg
-	    SUB      s0,     16
-	    rg:
-	    COMP     s0,     16
-	    JUMP     Z,      enend
-	    LOAD     s2,     32
-	    OUT      s2,     lcd
-	    CALL     handleE
-	    ADD      s0,     1
-	    JUMP     rg
-	    enend:
-	    COMP     cursor, 16
-	    JUMP     NC,     encont
-	    CALL     secline
-	    JUMP     ened
-	    encont:
-	    CALL     fline
-	    ened:
+        LOAD     s0,     cursor
+        COMP     s0,     16
+        JUMP     C,      rg
+        SUB      s0,     16
+        rg:
+        COMP     s0,     16
+        JUMP     Z,      enend
+        LOAD     s2,     32
+        OUT      s2,     lcd
+        CALL     handleE
+        ADD      s0,     1
+        JUMP     rg
+        enend:
+        COMP     cursor, 16
+        JUMP     NC,     encont
+        CALL     secline
+        JUMP     ened
+        encont:
+        CALL     fline
+        ened:
         JUMP     cursorMoved
 home:
-	    COMP     cursor,  16
-	    JUMP     NC,      hel
-	    CALL     fline
-	    JUMP     cursorMoved
-	    hel:
-	    CALL     secline
+        COMP     cursor,  16
+        JUMP     NC,      hel
+        CALL     fline
+        JUMP     cursorMoved
+        hel:
+        CALL     secline
         JUMP     cursorMoved
 pend:
         COMP     cursor,  16
-	    JUMP     NC,      eel
-	    CALL     secline
-	    JUMP     cursorMoved
-	    eel:
-	    CALL     fline
+        JUMP     NC,      eel
+        CALL     secline
+        JUMP     cursorMoved
+        eel:
+        CALL     fline
         JUMP     cursorMoved
 cursorLeft:
-	    LOAD     s3,      4
-	    STORE    s3,      3
-	    CALL     code
-	    
-	    COMP     cursor,  0
-	    JUMP     NZ,      nxtcl
-	    LOAD     s3,      $CF
-	    LOAD     cursor,  31
-	    OUT      s3,      lcd
-	    JUMP     cursorMoved
-	    nxtcl:
-	    SUB      cursor,  1
-	    COMP     cursor,  16
-	    JUMP     NZ,      nxtcl1
-	    CALL     secline
-	    JUMP     cursorMoved
-	    nxtcl1:
-	    COMP     cursor,  16
-	    JUMP     NC,      nxtcl2
-	    LOAD     s2,      cursor
-	    ADD      s2,      $80
-	    OUT      s2,      lcd
-	    JUMP     cursorMoved
-	    nxtcl2:
-	    LOAD     s2,      cursor
-	    ADD      s2,      $C0
-	    OUT      s2,      lcd
-	    JUMP    cursorMoved
+        LOAD     s3,      4
+        STORE    s3,      3
+        CALL     code
+
+        COMP     cursor,  0
+        JUMP     NZ,      nxtcl
+        LOAD     s3,      $CF
+        LOAD     cursor,  31
+        OUT      s3,      lcd
+        JUMP     cursorMoved
+        nxtcl:
+        SUB      cursor,  1
+        COMP     cursor,  16
+        JUMP     NZ,      nxtcl1
+        CALL     secline
+        JUMP     cursorMoved
+        nxtcl1:
+        COMP     cursor,  16
+        JUMP     NC,      nxtcl2
+        LOAD     s2,      cursor
+        ADD      s2,      $80
+        OUT      s2,      lcd
+        JUMP     cursorMoved
+        nxtcl2:
+        LOAD     s2,      cursor
+        ADD      s2,      $C0
+        OUT      s2,      lcd
+        JUMP    cursorMoved
 cursorRigth:
         LOAD     s3,      5
-	    STORE    s3,      3
-	    CALL     code
-	    
-	    COMP     cursor,  15
-	    JUMP     NZ,      nxtcl
-	    CALL     secline
-	    JUMP     cursorMoved
-	    nxtcl:
-	    ADD      cursor,  1
-	    COMP     cursor,  33 ; or 32
-	    JUMP     NZ,      nxtcl1
-	    CALL     fline
-	    JUMP     cursorMoved
-	    nxtcl1:
-	    COMP     cursor,  16
-	    JUMP     NC,      nxtcl2
-	    LOAD     s2,      cursor
-	    ADD      s2,      $80
-	    OUT      s2,      lcd
-	    JUMP     cursorMoved
-	    nxtcl2:
-	    LOAD     s2,      cursor
-	    ADD      s2,      $C0
-	    OUT      s2,      lcd
-	    JUMP    cursorMoved
+        STORE    s3,      3
+        CALL     code
+
+        COMP     cursor,  15
+        JUMP     NZ,      nxtcl
+        CALL     secline
+        JUMP     cursorMoved
+        nxtcl:
+        ADD      cursor,  1
+        COMP     cursor,  33 ; or 32
+        JUMP     NZ,      nxtcl1
+        CALL     fline
+        JUMP     cursorMoved
+        nxtcl1:
+        COMP     cursor,  16
+        JUMP     NC,      nxtcl2
+        LOAD     s2,      cursor
+        ADD      s2,      $80
+        OUT      s2,      lcd
+        JUMP     cursorMoved
+        nxtcl2:
+        LOAD     s2,      cursor
+        ADD      s2,      $C0
+        OUT      s2,      lcd
+        JUMP    cursorMoved
 curtsorUp:
         LOAD     s3,      2
         STORE    s3,      3
@@ -401,15 +401,15 @@ cursorDown:
         CALL     code
 pageup:
 pagedown:
-	    COMP     cursor,  16
-	    JUMP     NC,      cel
-	    ADD      cursor,  16
-	    LOAD     s1,      $80
-	    JUMP     mvcur
-	    cel:
-	    SUB      cursor,  16
-	    LOAD     s1,      $C0
-	    CALL     fline
+        COMP     cursor,  16
+        JUMP     NC,      cel
+        ADD      cursor,  16
+        LOAD     s1,      $80
+        JUMP     mvcur
+        cel:
+        SUB      cursor,  16
+        LOAD     s1,      $C0
+        CALL     fline
         mvcur:
         ADD      s1,      cursor
         OUT      s1,      lcd
@@ -417,7 +417,7 @@ cursorMoved:
         CALL     handleE
         CALL     delay40u
         FETCH    s0,      5
-	    COMP     s0,      1
+        COMP     s0,      1
         JUMP     NZ,      zero
         RET
 btnReleased:
@@ -431,7 +431,7 @@ btnReleased:
         JUMP     Z,      bel
         JUMP     zero
         bel:
-		LOAD     shift,   0
+        LOAD     shift,   0
         JUMP     zero
 released:
         LOAD     btn_rel, 1
@@ -445,29 +445,29 @@ upperCase:
         ; TODO: implement procedure
         ; if shift or caps flags are set but not both
         ; different handling for letters, numbers and special characters f. e. . -> >; ' -> "
-        
+
         RET
-        
+
 code:
-	    FETCH    s0,      0 ; code status
-	    FETCH    s1,      1 ; code counter
-	    FETCH    s2,      3 ; code argument
-	    
-		COMP     s0,      1
-	    JUMP     Z,       nxt
-	    COMP     s2,      2
-	    JUMP     NZ,      cend
-	    LOAD     s1,      1
-	    STORE    s1,      1
-	    STORE    s1,      0
-	    JUMP     cend
-	    nxt: ; not first symbol
-	    COMP     s1,      1
+        FETCH    s0,      0 ; code status
+        FETCH    s1,      1 ; code counter
+        FETCH    s2,      3 ; code argument
+
+        COMP     s0,      1
+        JUMP     Z,       nxt
+        COMP     s2,      2
+        JUMP     NZ,      cend
+        LOAD     s1,      1
+        STORE    s1,      1
+        STORE    s1,      0
+        JUMP     cend
+        nxt: ; not first symbol
+        COMP     s1,      1
         JUMP     NZ,      el1
         COMP     s2,      2
         JUMP     NZ,      bad
-	    JUMP     codeCont
-	    
+        JUMP     codeCont
+
         el1:
         COMP     s1,      2
         JUMP     NZ,      el2
@@ -522,76 +522,77 @@ code:
         JUMP     NZ,      bad
         COMP     s2,      0
         JUMP     NZ,      bad
-	    CALL     codeDone
-	    JUMP     bad
+        CALL     codeDone
+        JUMP     bad
         codeCont:
         OUT      s1,      led
         ADD      s1,      1
         STORE    s1,      1
         JUMP     cend
-	    bad:
-	    LOAD     s1,      0
-	    STORE    s1,      1
-	    STORE    s1,      0
-	    cend:
-	    RET
-	    
+        bad:
+        LOAD     s1,      0
+        STORE    s1,      1
+        STORE    s1,      0
+        cend:
+        RET
+
 codeDone:
-	    LOAD     s0,      $FF
-	    OUT      s0,      led
-	    LOAD     s2,     1
-	    OUT      s2,     lcd
-	    CALL     handleE
-	    
-	    LOAD     s2,     65
-	    OUT      s2,     lcd
-	    CALL     handleE
-	    LOAD     s2,     87
-	    OUT      s2,     lcd
-	    CALL     handleE
-	    LOAD     s2,     69
-	    OUT      s2,     lcd
-	    CALL     handleE
-	    LOAD     s2,     83
-	    OUT      s2,     lcd
-	    CALL     handleE
-	    LOAD     s2,     79
-	    OUT      s2,     lcd
-	    CALL     handleE
-	    LOAD     s2,     77
-	    OUT      s2,     lcd
-	    CALL     handleE
-	    LOAD     s2,     69
-	    OUT      s2,     lcd
-	    CALL     handleE
-	    LOAD     s2,     32
-	    OUT      s2,     lcd
-	    CALL     handleE
-	    LOAD     s2,     80
-	    OUT      s2,     lcd
-	    CALL     handleE
-	    LOAD     s2,     82
-	    OUT      s2,     lcd
-	    CALL     handleE
-	    LOAD     s2,     79
-	    OUT      s2,     lcd
-	    CALL     handleE
-	    LOAD     s2,     74
-	    OUT      s2,     lcd
-	    CALL     handleE
-	    LOAD     s2,     69
-	    OUT      s2,     lcd
-	    CALL     handleE
-	    LOAD     s2,     67
-	    OUT      s2,     lcd
-	    CALL     handleE
-	    LOAD     s2,     84
-	    OUT      s2,     lcd
-	    CALL     handleE
-	    LOAD     s2,     33
-	    OUT      s2,     lcd
-	    CALL     handleE
-	    RET
-        
+        LOAD     s0,      $FF
+        OUT      s0,      led
+        LOAD     s2,     1
+        OUT      s2,     lcd
+        CALL     handleE
+
+        LOAD     s2,     65
+        OUT      s2,     lcd
+        CALL     handleE
+        LOAD     s2,     87
+        OUT      s2,     lcd
+        CALL     handleE
+        LOAD     s2,     69
+        OUT      s2,     lcd
+        CALL     handleE
+        LOAD     s2,     83
+        OUT      s2,     lcd
+        CALL     handleE
+        LOAD     s2,     79
+        OUT      s2,     lcd
+        CALL     handleE
+        LOAD     s2,     77
+        OUT      s2,     lcd
+        CALL     handleE
+        LOAD     s2,     69
+        OUT      s2,     lcd
+        CALL     handleE
+        LOAD     s2,     32
+        OUT      s2,     lcd
+        CALL     handleE
+        LOAD     s2,     80
+        OUT      s2,     lcd
+        CALL     handleE
+        LOAD     s2,     82
+        OUT      s2,     lcd
+        CALL     handleE
+        LOAD     s2,     79
+        OUT      s2,     lcd
+        CALL     handleE
+        LOAD     s2,     74
+        OUT      s2,     lcd
+        CALL     handleE
+        LOAD     s2,     69
+        OUT      s2,     lcd
+        CALL     handleE
+        LOAD     s2,     67
+        OUT      s2,     lcd
+        CALL     handleE
+        LOAD     s2,     84
+        OUT      s2,     lcd
+        CALL     handleE
+        LOAD     s2,     33
+        OUT      s2,     lcd
+        CALL     handleE
+        RET
+
 ORG     $3FF
 JUMP    handleInt
+
