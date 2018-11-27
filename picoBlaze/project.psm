@@ -548,15 +548,15 @@ upperCase:
         RET    
     
         ucnxt12:
-        COMP     s4,      123
+        COMP     s4,      91
         JUMP     NZ,      ucnxt13
-        SUB      s4,      32
+        ADD      s4,      32
         RET    
     
         ucnxt13:
-        COMP     s4,      125
+        COMP     s4,      93
         JUMP     NZ,      ucnxt14
-        SUB      s4,      32
+        ADD      s4,      32
         RET    
     
         ucnxt14:
@@ -682,7 +682,7 @@ printData:
         OUT      s2,      lcd
         CALL     handleERS
         CALL     delay40u
-	    RET
+        RET
 
 codeDone:
         LOAD     s0,      $FF
@@ -693,37 +693,37 @@ codeDone:
         CALL     delay40u
         
         LOAD     s2,      65
-		CALL     printData
+        CALL     printData
         LOAD     s2,      87
-		CALL     printData
+        CALL     printData
         LOAD     s2,      69
-		CALL     printData
+        CALL     printData
         LOAD     s2,      83
-		CALL     printData
+        CALL     printData
         LOAD     s2,      79
-		CALL     printData
+        CALL     printData
         LOAD     s2,      77
-		CALL     printData
+        CALL     printData
         LOAD     s2,      69
-		CALL     printData
+        CALL     printData
         LOAD     s2,      32
-		CALL     printData
+        CALL     printData
         LOAD     s2,      80
-		CALL     printData
+        CALL     printData
         LOAD     s2,      82
-		CALL     printData
+        CALL     printData
         LOAD     s2,      79
-		CALL     printData
+        CALL     printData
         LOAD     s2,      74
-		CALL     printData
+        CALL     printData
         LOAD     s2,      69
-		CALL     printData
+        CALL     printData
         LOAD     s2,      67
-		CALL     printData
+        CALL     printData
         LOAD     s2,      84
-		CALL     printData
+        CALL     printData
         LOAD     s2,      33
-		CALL     printData
+        CALL     printData
         RET
 
 ORG     $3FF
