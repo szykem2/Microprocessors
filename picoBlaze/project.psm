@@ -30,6 +30,10 @@ STORE   s0,      3
 STORE   s0,      5
 LOAD    s0,      97
 STORE   s0,      $1C
+LOAD    s0,      57
+STORE   s0,      $1D
+LOAD    s0,      98
+STORE   s0,      $1B
 
 LOAD    s1,      1
 OUT     s1,      led
@@ -447,11 +451,144 @@ ed:
         RETI     ENABLE
 
 upperCase:
-        ; TODO: implement procedure
-        ; if shift or caps flags are set but not both
-        ; different handling for letters, numbers and special characters f. e. . -> >; ' -> "
-
+        COMP     shift,   1
+        JUMP     NZ,      ucnot
+        COMP     caps,    1
+        JUMP     NZ,      ucnot
         RET
+        ucnot:
+        COMP     shift,   caps
+        JUMP     NZ,      uccont
+        RET
+        uccont:
+        ; letters
+        COMP     s4,      97
+        JUMP     C,       ucnxt
+        COMP     s4,      123
+        JUMP     NC,      ucnxt
+        SUB      s4,      32
+        RET
+        
+        ucnxt:
+        COMP     s4,      48
+        JUMP     NZ,      ucnxt0
+        SUB      s4,      7
+        RET    
+    
+        ucnxt0:
+        COMP     s4,      49
+        JUMP     NZ,      ucnxt1
+        SUB      s4,      16
+        RET    
+    
+        ucnxt1:
+        COMP     s4,      50
+        JUMP     NZ,      ucnxt2
+        ADD      s4,      14
+        RET    
+    
+        ucnxt2:
+        COMP     s4,      51
+        JUMP     NZ,      ucnxt3
+        SUB      s4,      16
+        RET    
+    
+        ucnxt3:
+        COMP     s4,      52
+        JUMP     NZ,      ucnxt4
+        SUB      s4,      16
+        RET    
+    
+        ucnxt4:
+        COMP     s4,      53
+        JUMP     NZ,      ucnxt5
+        SUB      s4,      16
+        RET    
+    
+        ucnxt5:
+        COMP     s4,      54
+        JUMP     NZ,      ucnxt6
+        ADD      s4,      40
+        RET    
+    
+        ucnxt6:
+        COMP     s4,      55
+        JUMP     NZ,      ucnxt7
+        SUB      s4,      29
+        RET    
+    
+        ucnxt7:
+        COMP     s4,      56
+        JUMP     NZ,      ucnxt8
+        SUB      s4,      14
+        RET    
+    
+        ucnxt8:
+        COMP     s4,      57
+        JUMP     NZ,      ucnxt9
+        SUB      s4,      17
+        RET    
+    
+        ucnxt9:
+        COMP     s4,      58
+        JUMP     NZ,      ucnxt10
+        ADD      s4,      1
+        RET    
+    
+        ucnxt10:
+        COMP     s4,      44
+        JUMP     NZ,      ucnxt11
+        ADD      s4,      16
+        RET    
+    
+        ucnxt11:
+        COMP     s4,      45
+        JUMP     NZ,      ucnxt12
+        ADD      s4,      50
+        RET    
+    
+        ucnxt12:
+        COMP     s4,      123
+        JUMP     NZ,      ucnxt13
+        SUB      s4,      32
+        RET    
+    
+        ucnxt13:
+        COMP     s4,      125
+        JUMP     NZ,      ucnxt14
+        SUB      s4,      32
+        RET    
+    
+        ucnxt14:
+        COMP     s4,      92
+        JUMP     NZ,      ucnxt15
+        ADD      s4,      32
+        RET    
+    
+        ucnxt15:
+        COMP     s4,      39
+        JUMP     NZ,      ucnxt16
+        SUB      s4,      5
+        RET    
+    
+        ucnxt16:
+        COMP     s4,      96
+        JUMP     NZ,      ucnxt17
+        ADD      s4,      30
+        RET    
+    
+        ucnxt17:
+        COMP     s4,      43
+        JUMP     NZ,      ucnxt18
+        ADD      s4,      18
+        RET    
+    
+        ucnxt18:
+        COMP     s4,      46
+        JUMP     NZ,      ucnxt19
+        ADD      s4,      16
+        ucnxt19:
+        RET        
 
 code:
         FETCH    s0,      0 ; code status
