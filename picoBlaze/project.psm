@@ -29,9 +29,6 @@ STORE   s0,      1
 STORE   s0,      3
 STORE   s0,      5
 
-LOAD    s1,      128
-OUT     s1,      led
-
 ; RAM INITIALIZATION
 ; A
 LOAD    s0,      97
@@ -50,7 +47,7 @@ LOAD    s0,      101
 STORE   s0,      $24
 ; F
 LOAD    s0,      102
-STORE   s0,      $21
+STORE   s0,      $2B
 ; G
 LOAD    s0,      103
 STORE   s0,      $34
@@ -113,7 +110,7 @@ LOAD    s0,      122
 STORE   s0,      $1A
 
 ; `
-LOAD    s0,      196
+LOAD    s0,      96
 STORE   s0,      $0E
 ; ]
 LOAD    s0,      93
@@ -225,6 +222,9 @@ STORE   s0,      $45
 LOAD    s0,      48
 STORE   s0,      $70
 
+LOAD    s1,      128
+OUT     s1,      led
+
 ; global interrupts
 LOAD    s0,      2                                     ; prepare interrupt for PS/2
 OUT     s0,      int_mask                              ; enable intterupts
@@ -322,6 +322,7 @@ secLine:
         OUT      s0,      lcd
         CALL     handleE
         CALL     delay40u
+        LOAD     cursor,   16
         RET
 
 fLine:
@@ -402,7 +403,9 @@ lcd_out:
         LOAD     s3,      0
         STORE    s3,      3
         CALL     code
-        JUMP     lend
+        COMP     s4,      97
+        JUMP     Z,       lend
+        JUMP     zero
         llend:
 
         COMP     s4,      98
@@ -412,12 +415,30 @@ lcd_out:
         CALL     code
         lend:
 
+        COMP     s4,      9
+        JUMP     NZ,      tabend
+        LOAD     s1,      5
+        LOAD     s2,      32
+        tab:
+        SUB      s1,      1
+        JUMP     Z,       zero
+        COMP     cursor,  16
+        CALL     z,       secLine
+        COMP     cursor,  32
+        CALL     z,       fLine
+        OUT      s2,      lcd
+        CALL     handleERS
+        CALL     delay40u
+        ADD      cursor,  1
+        JUMP     tab
+        tabend:
+
         CALL     upperCase
         COMP     cursor,  16
         CALL     z,       secLine
         COMP     cursor,  32
         CALL     z,       fLine
-        ; OUT      s4,      led
+
         OUT      s4,      lcd
         CALL     handleERS
         CALL     delay40u
@@ -439,7 +460,7 @@ handleSpecial:
         COMP     decoded, $71
         JUMP     Z,       delete
         COMP     decoded, $75
-        JUMP     Z,       curtsorUp
+        JUMP     Z,       cursorUp
         COMP     decoded, $72
         JUMP     Z,       cursorDown
         COMP     decoded, $6B
@@ -450,13 +471,20 @@ handleSpecial:
         JUMP     Z,       pageup
         COMP     decoded, $7A
         JUMP     Z,       pagedown
-
+        COMP     decoded, $4A
+        JUMP     Z,       slash
+        JUMP     zero
+slash:
+        LOAD     s2,     47
+        OUT      s2,     lcd
+        CALL     handleERS
+        CALL     delay40u
         JUMP     zero
 escape:
         LOAD     s2,     1
         OUT      s2,     lcd
         CALL     handleE
-        CALL     delay40u
+        CALL     delay5m
         CALL     fline
         JUMP     zero
 pshift:
@@ -485,6 +513,8 @@ delete:
         ADD      cursor,  1
         JUMP     cursorLeft
 backspace:
+        COMP     cursor,  0
+        JUMP     Z,       zero
         LOAD     s0,      1
         STORE    s0,      5
         CALL     cursorLeft
@@ -492,16 +522,16 @@ backspace:
         STORE    s0,      5
         JUMP     delete
 enter:
+        LOAD     s2,     32
         LOAD     s0,     cursor
         COMP     s0,     16
-        JUMP     C,      rg
+        JUMP     C,     rg
         SUB      s0,     16
         rg:
         COMP     s0,     16
         JUMP     Z,      enend
-        LOAD     s2,     32
         OUT      s2,     lcd
-        CALL     handleE
+        CALL     handleERS
         CALL     delay40u
         ADD      s0,     1
         JUMP     rg
@@ -509,6 +539,7 @@ enter:
         COMP     cursor, 16
         JUMP     NC,     encont
         CALL     secline
+        LOAD     cursor,  16
         JUMP     ened
         encont:
         CALL     fline
@@ -525,10 +556,12 @@ home:
 pend:
         COMP     cursor,  16
         JUMP     NC,      eel
-        CALL     secline
+        LOAD     s4,      $8F
+        OUT      s4,      lcd
         JUMP     cursorMoved
         eel:
-        CALL     fline
+        LOAD     s4,      $CF
+        OUT      s4,      lcd
         JUMP     cursorMoved
 cursorLeft:
         LOAD     s3,      4
@@ -557,6 +590,7 @@ cursorLeft:
         nxtcl2:
         LOAD     s2,      cursor
         ADD      s2,      $C0
+        SUB      s2,      16
         OUT      s2,      lcd
         JUMP    cursorMoved
 cursorRigth:
@@ -567,14 +601,15 @@ cursorRigth:
         COMP     cursor,  15
         JUMP     NZ,      nxtcr
         CALL     secline
+        ADD      cursor,  1
         JUMP     cursorMoved
         nxtcr:
-        ADD      cursor,  1
-        COMP     cursor,  33 ; or 32
+        COMP     cursor,  32
         JUMP     NZ,      nxtcr1
         CALL     fline
         JUMP     cursorMoved
         nxtcr1:
+        ADD      cursor,  1
         COMP     cursor,  16
         JUMP     NC,      nxtcr2
         LOAD     s2,      cursor
@@ -584,9 +619,10 @@ cursorRigth:
         nxtcr2:
         LOAD     s2,      cursor
         ADD      s2,      $C0
+        SUB      s2,      16
         OUT      s2,      lcd
         JUMP    cursorMoved
-curtsorUp:
+cursorUp:
         LOAD     s3,      2
         STORE    s3,      3
         CALL     code
@@ -600,12 +636,12 @@ pagedown:
         COMP     cursor,  16
         JUMP     NC,      cel
         ADD      cursor,  16
-        LOAD     s1,      $80
+        LOAD     s1,      $C0
+        SUB      s1,      16
         JUMP     mvcur
         cel:
         SUB      cursor,  16
-        LOAD     s1,      $C0
-        CALL     fline
+        LOAD     s1,      $80
         mvcur:
         ADD      s1,      cursor
         OUT      s1,      lcd
@@ -655,132 +691,143 @@ upperCase:
         JUMP     NC,      ucnxt
         SUB      s4,      32
         RET
-        
+
         ucnxt:
         COMP     s4,      48
         JUMP     NZ,      ucnxt0
         SUB      s4,      7
-        RET    
-    
+        RET
+
         ucnxt0:
         COMP     s4,      49
         JUMP     NZ,      ucnxt1
         SUB      s4,      16
-        RET    
-    
+        RET
+
         ucnxt1:
         COMP     s4,      50
         JUMP     NZ,      ucnxt2
         ADD      s4,      14
-        RET    
-    
+        RET
+
         ucnxt2:
         COMP     s4,      51
         JUMP     NZ,      ucnxt3
         SUB      s4,      16
-        RET    
-    
+        RET
+
         ucnxt3:
         COMP     s4,      52
         JUMP     NZ,      ucnxt4
         SUB      s4,      16
-        RET    
-    
+        RET
+
         ucnxt4:
         COMP     s4,      53
         JUMP     NZ,      ucnxt5
         SUB      s4,      16
-        RET    
-    
+        RET
+
         ucnxt5:
         COMP     s4,      54
         JUMP     NZ,      ucnxt6
         ADD      s4,      40
-        RET    
-    
+        RET
+
         ucnxt6:
         COMP     s4,      55
         JUMP     NZ,      ucnxt7
-        SUB      s4,      29
-        RET    
-    
+        SUB      s4,      17
+        RET
+
         ucnxt7:
         COMP     s4,      56
         JUMP     NZ,      ucnxt8
         SUB      s4,      14
-        RET    
-    
+        RET
+
         ucnxt8:
         COMP     s4,      57
         JUMP     NZ,      ucnxt9
         SUB      s4,      17
-        RET    
-    
+        RET
+
         ucnxt9:
-        COMP     s4,      58
+        COMP     s4,      59
         JUMP     NZ,      ucnxt10
-        ADD      s4,      1
-        RET    
-    
+        SUB      s4,      1
+        RET
+
         ucnxt10:
         COMP     s4,      44
         JUMP     NZ,      ucnxt11
         ADD      s4,      16
-        RET    
-    
+        RET
+
         ucnxt11:
         COMP     s4,      45
         JUMP     NZ,      ucnxt12
         ADD      s4,      50
-        RET    
-    
+        RET
+
         ucnxt12:
         COMP     s4,      91
         JUMP     NZ,      ucnxt13
         ADD      s4,      32
-        RET    
-    
+        RET
+
         ucnxt13:
         COMP     s4,      93
         JUMP     NZ,      ucnxt14
         ADD      s4,      32
-        RET    
-    
+        RET
+
         ucnxt14:
         COMP     s4,      92
         JUMP     NZ,      ucnxt15
         ADD      s4,      32
-        RET    
-    
+        RET
+
         ucnxt15:
         COMP     s4,      39
         JUMP     NZ,      ucnxt16
         SUB      s4,      5
-        RET    
-    
+        RET
+
         ucnxt16:
         COMP     s4,      96
         JUMP     NZ,      ucnxt17
         ADD      s4,      30
-        RET    
-    
+        RET
+
         ucnxt17:
         COMP     s4,      43
         JUMP     NZ,      ucnxt18
         ADD      s4,      18
-        RET    
-    
+        RET
+
         ucnxt18:
         COMP     s4,      46
         JUMP     NZ,      ucnxt19
         ADD      s4,      16
+
         ucnxt19:
-        RET        
+        COMP     s4,      61
+        JUMP     NZ,      ucnxt20
+        SUB      s4,      18
+
+        ucnxt20:
+        COMP     s4,      47
+        JUMP     NZ,      ucnxt21
+        ADD      s4,      16
+
+        ucnxt21:
+        RET
 
 code:
-        FETCH    s0,      0 ; code status
-        FETCH    s1,      1 ; code counter
-        FETCH    s2,      3 ; code argument
+        FETCH    s0,      0                            ; code status
+        FETCH    s1,      1                            ; code counter
+        FETCH    s2,      3                            ; code argument
 
         COMP     s0,      1
         JUMP     Z,       nxt
@@ -869,6 +916,8 @@ printData:
         OUT      s2,      lcd
         CALL     handleERS
         CALL     delay40u
+        ADD      cursor,  1
+        OUT      s2,      led
         RET
 
 codeDone:
@@ -877,7 +926,9 @@ codeDone:
         LOAD     s2,      1
         OUT      s2,      lcd
         CALL     handleE
-        CALL     delay40u
+        CALL     delay5m
+        CALL     fline
+        LOAD     s4,      0
         
         LOAD     s2,      65
         CALL     printData
@@ -915,4 +966,3 @@ codeDone:
 
 ORG     $3FF
 JUMP    handleInt
-
