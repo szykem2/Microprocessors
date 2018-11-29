@@ -23,10 +23,199 @@ special          EQU        s5                         ; special character enter
 
 EINT                                                   ; enable interrupt system
 
+; RAM INITIALIZATION
+; A
 LOAD    s0,      97
 STORE   s0,      $1C
-FETCH   s1,      $1C
-OUT     s1,      led
+; B
+LOAD    s0,      98
+STORE   s0,      $32
+; C
+LOAD    s0,      99
+STORE   s0,      $21
+; D
+LOAD    s0,      100
+STORE   s0,      $23
+; E
+LOAD    s0,      101
+STORE   s0,      $24
+; F
+LOAD    s0,      102
+STORE   s0,      $21
+; G
+LOAD    s0,      103
+STORE   s0,      $34
+; H
+LOAD    s0,      104
+STORE   s0,      $33
+; I
+LOAD    s0,      105
+STORE   s0,      $43
+; J
+LOAD    s0,      106
+STORE   s0,      $3B
+; K
+LOAD    s0,      107
+STORE   s0,      $42
+; L
+LOAD    s0,      108
+STORE   s0,      $4B
+; M
+LOAD    s0,      109
+STORE   s0,      $3A
+; N
+LOAD    s0,      110
+STORE   s0,      $31
+; O
+LOAD    s0,      111
+STORE   s0,      $44
+; P
+LOAD    s0,      112
+STORE   s0,      $4D
+; Q
+LOAD    s0,      113
+STORE   s0,      $15
+; R
+LOAD    s0,      114
+STORE   s0,      $2D
+; S
+LOAD    s0,      115
+STORE   s0,      $1B
+; T
+LOAD    s0,      116
+STORE   s0,      $2C
+; U
+LOAD    s0,      117
+STORE   s0,      $3C
+; V
+LOAD    s0,      118
+STORE   s0,      $2A
+; W
+LOAD    s0,      119
+STORE   s0,      $1D
+; X
+LOAD    s0,      120
+STORE   s0,      $22
+; Y
+LOAD    s0,      121
+STORE   s0,      $35
+; Z
+LOAD    s0,      122
+STORE   s0,      $1A
+
+; `
+LOAD    s0,      196
+STORE   s0,      $0E
+; ]
+LOAD    s0,      93
+STORE   s0,      $5B
+; [
+LOAD    s0,      91
+STORE   s0,      $54
+; ;
+LOAD    s0,      59
+STORE   s0,      $4C
+; '
+LOAD    s0,      39
+STORE   s0,      $52
+; \
+LOAD    s0,      92
+STORE   s0,      $5D
+; ,
+LOAD    s0,      44
+STORE   s0,      $41
+; .
+LOAD    s0,      46
+STORE   s0,      $49
+; . (numpad)
+LOAD    s0,      46
+STORE   s0,      $71
+; /
+LOAD    s0,      47
+STORE   s0,      $4A
+; space
+LOAD    s0,      32
+STORE   s0,      $29
+; tab
+LOAD    s0,      9
+STORE   s0,      $0D
+; -
+LOAD    s0,      45
+STORE   s0,      $4E
+; =
+LOAD    s0,      61
+STORE   s0,      $55
+; * (numpad)
+LOAD    s0,      42
+STORE   s0,      $7C
+; - (numpad)
+LOAD    s0,      45
+STORE   s0,      $7B
+; + (numpad)
+LOAD    s0,      43
+STORE   s0,      $79
+
+; 1
+LOAD    s0,      49
+STORE   s0,      $16
+; 1 (numpad)
+LOAD    s0,      49
+STORE   s0,      $69
+; 2
+LOAD    s0,      50
+STORE   s0,      $1E
+; 2 (numpad)
+LOAD    s0,      50
+STORE   s0,      $72
+; 3
+LOAD    s0,      51
+STORE   s0,      $26
+; 3 (numpad)
+LOAD    s0,      51
+STORE   s0,      $7A
+; 4
+LOAD    s0,      52
+STORE   s0,      $25
+; 4 (numpad)
+LOAD    s0,      52
+STORE   s0,      $6B
+; 5
+LOAD    s0,      53
+STORE   s0,      $2E
+; 5 (numpad)
+LOAD    s0,      53
+STORE   s0,      $73
+; 6
+LOAD    s0,      54
+STORE   s0,      $36
+; 6 (numpad)
+LOAD    s0,      54
+STORE   s0,      $74
+; 7
+LOAD    s0,      55
+STORE   s0,      $3D
+; 7 (numpad)
+LOAD    s0,      55
+STORE   s0,      $6C
+; 8
+LOAD    s0,      56
+STORE   s0,      $3E
+; 8 (numpad)
+LOAD    s0,      56
+STORE   s0,      $75
+; 9
+LOAD    s0,      57
+STORE   s0,      $46
+; 9 (numpad)
+LOAD    s0,      57
+STORE   s0,      $7D
+; 0
+LOAD    s0,      48
+STORE   s0,      $45
+; 0 (numpad)
+LOAD    s0,      48
+STORE   s0,      $70
+
 
 ; global interrupts
 LOAD    s0,      2                                     ; prepare interrupt for PS/2
@@ -161,7 +350,7 @@ handleInt:
 
         COMP     int_cnt, 11
         JUMP     Z,       display
-        
+
         IN       s1,      ps2
         SR0      s1
         COMP     s1,      1
