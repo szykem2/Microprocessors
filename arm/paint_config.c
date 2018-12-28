@@ -139,7 +139,7 @@ uint16_t s7[16] = {
 extern uint32_t stroke;
 extern uint32_t color;
 
-void drawStroke(int x, int y, int type);
+void drawStroke(int x, int y);
 
 void getStroke(uint16_t* buf, int pos)
 {
@@ -249,4 +249,12 @@ void drawLayout(void)
 	printCharacter(222, 157, 'E');
 	printCharacter(222, 173, 'A');
 	printCharacter(222, 189, 'R');
+    
+    int tmp = stroke;
+    for(int i = 1; i < 8; i++)
+    {
+        stroke = i;
+        drawStroke(230, 16 * i + 1);
+    }
+    stroke = tmp;
 }
