@@ -23,11 +23,12 @@ special          EQU        s5                         ; special character enter
 
 EINT                                                   ; enable interrupt system
 
+; initialize ram storage for konami code
 LOAD    s0,      0
-STORE   s0,      0
-STORE   s0,      1
-STORE   s0,      3
-STORE   s0,      5
+STORE   s0,      0                                     ; code status
+STORE   s0,      1                                     ; code counter
+STORE   s0,      3                                     ; code argument
+STORE   s0,      5                                     ; backspace clicked
 
 ; RAM INITIALIZATION
 ; A
@@ -222,6 +223,7 @@ STORE   s0,      $45
 LOAD    s0,      48
 STORE   s0,      $70
 
+; initial load on leds (for debug)
 LOAD    s1,      128
 OUT     s1,      led
 
@@ -276,21 +278,23 @@ CALL    handleE
 CALL    delay5m
 CALL    fLine
 
+; clear registers by loading 0
 LOAD s8, 0
 LOAD sA, 0
 
 et:
         JUMP     et
 
+; procedure for 1 milisecond delay
 delay1m:
         LOAD     sF,      26
-
 wait1m:
         CALL     delay40u
         SUB      sF,      1
         JUMP     NZ,      wait1m
         RET
-
+        
+; precedure for 5 miliseconds delay
 delay5m:
         CALL     delay1m
         CALL     delay1m
@@ -298,25 +302,26 @@ delay5m:
         CALL     delay1m
         CALL     delay1m
         RET
-
+        
+; procedure for 1 microseconds delay        
 delay1u:
         LOAD     sE,      24
-
 wait1u:
         SUB      sE,      1
         JUMP     NZ,      wait1u
         LOAD     sE,      sE
         RET
 
+; procedure for 40 microseconds delay
 delay40u:
         LOAD     sD,      36
-
 wait40u:
         CALL     delay1u
         SUB      sD,      1
         JUMP     NZ,      wait40u
         RET
 
+; procedure setting cursor in the second line (clearing the second line)
 secLine:
         LOAD     s0,      $C0
         OUT      s0,      lcd
@@ -325,6 +330,7 @@ secLine:
         LOAD     cursor,   16
         RET
 
+; procedure setting cursor in the first line (clearing the first line)
 fLine:
         LOAD     s0,      $80
         OUT      s0,      lcd
@@ -333,6 +339,7 @@ fLine:
         CALL     delay40u
         RET
 
+; procedure for handling "enable puls" after display initialization, display clear
 handleE:
         LOAD     sE,      1
         OUT      sE,      lcd_control
@@ -341,6 +348,7 @@ handleE:
         OUT      sE,      lcd_control
         RET
 
+; procedure for handling "enable puls" with "data select" after sending data to lcd_value
 handleERS:
         LOAD     sE,      3
         OUT      sE,      lcd_control
@@ -349,6 +357,11 @@ handleERS:
         OUT      sE,      lcd_control
         RET
 
+; global procedure for interupt handling
+; 1. skip "start" bit and return
+; 2. skip "parity" bit and return
+; 3. skip "stop" bit and display value
+; 4. read bit, append to message and perform action
 handleInt:
         ADD      int_cnt, 1
         COMP     int_cnt, 1
@@ -361,7 +374,7 @@ handleInt:
         JUMP     Z,       display
 
         IN       s1,      ps2
-        SR0      s1
+        SR0      s1                                    ; skipping 'clk' value 
         COMP     s1,      1
         JUMP     NZ,      mov0
         SR1      decoded
@@ -369,6 +382,8 @@ handleInt:
 mov0:
         SR0      decoded
         JUMP     ed
+        
+; procedure for displaying message on lcd with special character handling   
 display:
         COMP     btn_rel, 1
         JUMP     Z,       btnReleased
@@ -396,8 +411,6 @@ lcd_out:
         FETCH    s4,      decoded
         COMP     s4,      0
         JUMP     Z,       zero
-
-
         COMP     s4,      97
         JUMP     NZ,      llend
         LOAD     s3,      0
@@ -406,19 +419,20 @@ lcd_out:
         COMP     s4,      97
         JUMP     Z,       lend
         JUMP     zero
+        
         llend:
-
         COMP     s4,      98
         JUMP     NZ,      lend
         LOAD     s3,      1
         STORE    s3,      3
         CALL     code
+        
         lend:
-
         COMP     s4,      9
         JUMP     NZ,      tabend
         LOAD     s1,      5
         LOAD     s2,      32
+        
         tab:
         SUB      s1,      1
         JUMP     Z,       zero
@@ -431,25 +445,30 @@ lcd_out:
         CALL     delay40u
         ADD      cursor,  1
         JUMP     tab
+       
         tabend:
-
         CALL     upperCase
         COMP     cursor,  16
         CALL     z,       secLine
         COMP     cursor,  32
         CALL     z,       fLine
-
         OUT      s4,      lcd
         CALL     handleERS
         CALL     delay40u
         ADD      cursor,  1
+
+; procedure to clear message and counter        
 zero:
         LOAD     decoded, 0
         LOAD     int_cnt, 0
         JUMP     ed
+
+; procedure to indicate special key is pressed    
 specialKey:
         LOAD     special, 1
         JUMP     zero
+        
+; procedure handling special key        
 handleSpecial:
         COMP     decoded, $5A
         JUMP     Z,       enter
@@ -474,12 +493,16 @@ handleSpecial:
         COMP     decoded, $4A
         JUMP     Z,       slash
         JUMP     zero
+        
+; display slash        
 slash:
         LOAD     s2,     47
         OUT      s2,     lcd
         CALL     handleERS
         CALL     delay40u
         JUMP     zero
+        
+; escape clicked        
 escape:
         LOAD     s2,     1
         OUT      s2,     lcd
@@ -487,6 +510,8 @@ escape:
         CALL     delay5m
         CALL     fline
         JUMP     zero
+        
+; shift clicked        
 pshift:
         COMP     btn_rel, 1
         JUMP     NZ,      el
@@ -495,12 +520,18 @@ pshift:
         el:
         LOAD     shift,   1
         JUMP     zero
+        
+; numlock clicked        
 numLock:
         XOR      num,     1
         JUMP     zero
+        
+; capslock clicked        
 capsLock:
         XOR      caps,    1
         JUMP     zero
+        
+; delete clicked        
 delete:
         COMP     cursor,  16
         CALL     Z,       secLine
@@ -512,6 +543,8 @@ delete:
         CALL     delay40u
         ADD      cursor,  1
         JUMP     cursorLeft
+        
+; backspace clicked        
 backspace:
         COMP     cursor,  0
         JUMP     Z,       zero
@@ -521,6 +554,8 @@ backspace:
         LOAD     s0,      0
         STORE    s0,      5
         JUMP     delete
+        
+; enter clicked        
 enter:
         LOAD     s2,     32
         LOAD     s0,     cursor
@@ -545,6 +580,8 @@ enter:
         CALL     fline
         ened:
         JUMP     cursorMoved
+        
+; home clicked        
 home:
         COMP     cursor,  16
         JUMP     NC,      hel
@@ -553,6 +590,8 @@ home:
         hel:
         CALL     secline
         JUMP     cursorMoved
+        
+; end clicked        
 pend:
         COMP     cursor,  16
         JUMP     NC,      eel
@@ -563,11 +602,12 @@ pend:
         LOAD     s4,      $CF
         OUT      s4,      lcd
         JUMP     cursorMoved
+        
+; left cursor clicked        
 cursorLeft:
         LOAD     s3,      4
         STORE    s3,      3
         CALL     code
-
         COMP     cursor,  0
         JUMP     NZ,      nxtcl
         LOAD     s3,      $CF
@@ -593,6 +633,8 @@ cursorLeft:
         SUB      s2,      16
         OUT      s2,      lcd
         JUMP    cursorMoved
+        
+; right cursor clicked        
 cursorRigth:
         LOAD     s3,      5
         STORE    s3,      3
@@ -622,11 +664,14 @@ cursorRigth:
         SUB      s2,      16
         OUT      s2,      lcd
         JUMP    cursorMoved
+        
+; cursor up clicked        
 cursorUp:
         LOAD     s3,      2
         STORE    s3,      3
         CALL     code
         JUMP     pagedown
+; cursor down, page up or page down clicked         
 cursorDown:
         LOAD     s3,      3
         STORE    s3,      3
@@ -645,6 +690,8 @@ pagedown:
         mvcur:
         ADD      s1,      cursor
         OUT      s1,      lcd
+        
+; procedure for handling cursor movement        
 cursorMoved:
         CALL     handleE
         CALL     delay40u
@@ -652,6 +699,8 @@ cursorMoved:
         COMP     s0,      1
         JUMP     NZ,      zero
         RET
+
+; button released handle (for long key holding)
 btnReleased:
         LOAD     btn_rel, 0
         LOAD     special, 0
@@ -665,14 +714,19 @@ btnReleased:
         bel:
         LOAD     shift,   0
         JUMP     zero
+        
+; procedure to set btn_rel (used to ignore button release)       
 released:
         LOAD     btn_rel, 1
         JUMP     zero
+        
+; finish interruption, clear status        
 ed:
         LOAD     s3,      0
         OUT      s3,      int_status
         RETI     ENABLE
 
+; handle if upper case (add equivalent ASCI value for character)
 upperCase:
         COMP     shift,   1
         JUMP     NZ,      ucnot
@@ -824,6 +878,7 @@ upperCase:
         ucnxt21:
         RET
 
+; procedure to handle Konami Code
 code:
         FETCH    s0,      0                            ; code status
         FETCH    s1,      1                            ; code counter
@@ -912,6 +967,7 @@ code:
         cend:
         RET
 
+; procedure to output value to lcd and led
 printData:
         OUT      s2,      lcd
         CALL     handleERS
@@ -920,6 +976,7 @@ printData:
         OUT      s2,      led
         RET
 
+; display message "AWESOME PROJECT!" on Konami code on lcd and indicate on led 
 codeDone:
         LOAD     s0,      $FF
         OUT      s0,      led
@@ -929,7 +986,6 @@ codeDone:
         CALL     delay5m
         CALL     fline
         LOAD     s4,      0
-        
         LOAD     s2,      65
         CALL     printData
         LOAD     s2,      87
@@ -964,5 +1020,6 @@ codeDone:
         CALL     printData
         RET
 
+; interruptions 
 ORG     $3FF
 JUMP    handleInt
