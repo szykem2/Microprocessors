@@ -10,10 +10,10 @@
 uint32_t TS_pressed = 0;
 uint32_t stroke = 1;
 uint32_t color = LCDBlack;
-const int xmin = 200;
-const int xmax = 4500;
-const int ymin = 200;
-const int ymax = 4500;
+const int xmin = 240;
+const int xmax = 3800;
+const int ymin = 180;
+const int ymax = 3700;
 const int sizex = 240;
 const int sizey = 320;
 
@@ -29,11 +29,13 @@ void sendCharacter(char value);
 void printCharacter(int posx, int posy, char sgn);
 void drawLayout(void);
 void drawStroke(int x, int y);
+void drawCStroke(int x, int y);
 void getStroke(uint16_t* buf, int pos);
 void handleSpecial(int x, int y);
 void handleRightBar(int x, int y);
 void handleBottomBar(int x, int y);
 void drawColor(void);
+void fillStrokeTile(void);
 
 
 int main(void)
@@ -41,13 +43,10 @@ int main(void)
 	initializeUART();
 	LCD_config();
 	touchpanelInit();
-	configureGPIO();
+	//configureGPIO();
 	while(1)
 	{
-		if (TS_pressed == 1)
-		{
-			updateCanvas();
-		}
+		updateCanvas();
 	}
 }
 
@@ -55,7 +54,7 @@ void updateCanvas(void)
 {
 	int x, y;
 	readTP(&x, &y);
-	if(x == 0 || x == xmax || y == 0 || y == ymax)
+	if(x < 0 || y > 340 || x == 0 || x == xmax || y == 0 || y == ymax)
 	{
 		sleep();
 		return;
@@ -90,7 +89,6 @@ void sendString(const char* ptr)
 
 void EINT3_IRQHandler(void) 
 {
-	sendString("touched");
 	TS_pressed ^= 1;
 	LPC_GPIOINT->IO0IntClr = (1 << 19);
 }
@@ -131,21 +129,44 @@ void LCD_config(void)
 	lcdConfiguration();
 	init_ILI9325();
 	drawLayout();
-	drawStroke(230,276);
+	drawCStroke(230,276);
 	drawColor();
 }
 
 void readTP(int *x, int *y)
 {
-	int rx, ry;
+	int rx = 0, ry = 0;
+	int xx = 0, yy = 0;
+	//NVIC_DisableIRQ(EINT3_IRQn);
+
+	int niter = 20;
+	for(int i = 0; i < niter; i++)
+	{
+		touchpanelGetXY(&ry, &rx);
+		if((xx < 0 || yy < 0) && rx > 0 && rx < sizex && ry > 0 && ry < sizey)
+		{
+			xx = 0;
+			yy = 0;
+			i = -1;
+			continue;
+		}
+		if((xx > 0 && yy > 0) && (rx < 0 || rx > sizex || ry < 0 || ry > sizey))
+		{
+			niter = i;
+			break;
+		}
+		xx += (rx - xmin)/((float)xmax - xmin) * sizex;
+		yy += (ry - ymin)/((float)ymax - ymin) * sizey;
+	}
+	//LPC_GPIOINT->IO0IntClr = (1 << 19);
+	//NVIC_EnableIRQ(EINT3_IRQn);
 	
-	touchpanelGetXY(&rx, &ry);
-	rx = (rx - xmin)/((float)xmax - xmin) * sizex;
-	ry = (ry - ymin)/((float)ymax - ymin) * sizey;
+	rx = xx / niter;
+	ry = yy / niter;
 	
-	char buf[15];
-	sprintf(buf, "(%d, %d)         \r", rx, ry);
-	sendString(buf);
+	char buf[50];
+	sprintf(buf, "(%d, %d)            \r", rx, ry);
+	//sendString(buf);
 	*x = rx;
 	*y = ry;
 }
@@ -167,9 +188,30 @@ void drawStroke(int x, int y)
 	{
 		for(int bit = 15; bit >= 0; --bit)
 		{
-			if(x > 1 && y > 1 && x < 239 && y < 319 && !(buf[i] & (1 << bit)))
+			if(posx + bit > 1 && posy > 1 && posx + bit < 239 && posy < 319 && (buf[i] & (1 << bit)))
 			{
-				lcdWriteReg(ADRX_RAM, posx);
+				lcdWriteReg(ADRX_RAM, posx + bit);
+				lcdWriteReg(ADRY_RAM, posy);
+				lcdWriteReg(DATA_RAM, color);
+			}
+		}
+		posy++;
+	}
+}
+
+void drawCStroke(int x, int y)
+{
+	int posx = x - 8, posy = y - 8;
+	uint16_t buf[16];
+	getStroke(buf, stroke);
+	
+	for (int i = 0; i < 16; ++i)
+	{
+		for(int bit = 15; bit >= 0; --bit)
+		{
+			if(x > 1 && y > 1 && x < 239 && y < 339 && (buf[i] & (1 << bit)))
+			{
+				lcdWriteReg(ADRX_RAM, posx + bit);
 				lcdWriteReg(ADRY_RAM, posy);
 				lcdWriteReg(DATA_RAM, color);
 			}
@@ -180,11 +222,11 @@ void drawStroke(int x, int y)
 
 void handleSpecial(int x, int y)
 {
-	if(x > sizex - 17 && y > sizey - 17)
+	if(x > sizex - 20 && y < sizey - 20)
 	{
 		handleRightBar(x, y);
 	}
-	else if(y > sizey - 17)
+	else if(y > sizey - 20)
 	{
 		handleBottomBar(x, y);
 	}
@@ -194,8 +236,12 @@ void handleRightBar(int x, int y)
 {
 	if(y < 119)
 	{
-		stroke = y / 7;
+		stroke = y / 17;
+		int tmp = color;
+		color = LCDBlack;
+		fillStrokeTile();
 		drawStroke(230,276);
+		color = tmp;
 	}
 	else if(y < 212)
 	{
@@ -208,20 +254,33 @@ void handleRightBar(int x, int y)
 void handleBottomBar(int x, int y)
 {
 	uint16_t colors[13] = {LCDWhite, LCDBlack, LCDGrey, LCDBlue, LCDBlueSea, LCDPastelBlue, LCDViolet, LCDMagenta, LCDRed, LCDGinger, LCDGreen, LCDCyan, LCDYellow};
-	int idx = x % 13;
+	int idx = x / 13;
 	color = colors[idx];
 	drawColor();
 }
 
 void drawColor(void)
 {
-	for(int y = 285; y < 301; ++y)
+	for(int y = 285; y < 302; ++y)
 	{
-		lcdWriteReg(ADRX_RAM, 221);
+		lcdWriteReg(ADRX_RAM, 222);
 		lcdWriteReg(ADRY_RAM, y);
-		for(int x = 0; x < 16; ++x)
+		for(int x = 0; x < 18; ++x)
 		{
 			lcdWriteReg(DATA_RAM, color);
+		}
+	}
+}
+
+void fillStrokeTile(void)
+{
+	for(int y = 268; y < 284; ++y)
+	{
+		lcdWriteReg(ADRX_RAM, 222);
+		lcdWriteReg(ADRY_RAM, y);
+		for(int x = 0; x < 18; ++x)
+		{
+			lcdWriteReg(DATA_RAM, LCDGrey);
 		}
 	}
 }

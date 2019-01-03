@@ -140,6 +140,7 @@ extern uint32_t stroke;
 extern uint32_t color;
 
 void drawStroke(int x, int y);
+void drawCStroke(int x, int y);
 
 void getStroke(uint16_t* buf, int pos)
 {
@@ -178,6 +179,7 @@ void getStroke(uint16_t* buf, int pos)
 
 void printCharacter(int posx, int posy, char sgn)
 {
+
 	lcdWriteReg(ADRX_RAM, posx);
 	lcdWriteReg(ADRY_RAM, posy);
 	unsigned char buf[16];
@@ -199,8 +201,8 @@ void drawLayout(void)
 	lcdWriteReg(ADRX_RAM, 0);
 	lcdWriteReg(ADRY_RAM, 0);
 	lcdWriteIndex(DATA_RAM);
-	for (int x = 0 ; x < 240; ++x)
-		for (int y = 0; y < 320; ++y)
+	for (int y = 0; y < 320; ++y)
+		for (int x = 0 ; x < 240; ++x)
 		{
 			if(y == 0 || y == 319 || y == 302 || x == 221 || x == 0 || x == 239)
 				lcdWriteData(LCDBlack);
@@ -213,7 +215,7 @@ void drawLayout(void)
 			}
 			else if(y > 302)
 			{
-				if(x <= 18 || x == 35 || x == 54 || x == 72 || x == 90 || x == 108 || x == 126 || x == 144 || x == 164 || x == 183 || x == 202)
+				if(x == 18 || x == 35 || x == 54 || x == 72 || x == 90 || x == 108 || x == 126 || x == 144 || x == 164 || x == 183 || x == 202)
 					lcdWriteData(LCDBlack);
 				else if (x < 18)
 					lcdWriteData(LCDWhite);
@@ -242,19 +244,24 @@ void drawLayout(void)
 				else 
 					lcdWriteData(LCDYellow);
 			}
+			else
+			  lcdWriteData(LCDWhite);
 		}
 	
-	printCharacter(222, 125, 'C');
-	printCharacter(222, 141, 'L');
-	printCharacter(222, 157, 'E');
-	printCharacter(222, 173, 'A');
-	printCharacter(222, 189, 'R');
-    
+    printCharacter(226, 125, 'C');
+    printCharacter(226, 141, 'L');
+    printCharacter(226, 157, 'E');
+    printCharacter(226, 173, 'A');
+    printCharacter(226, 189, 'R');
+		
+    int ctmp = color;
+		color = LCDBlack;
     int tmp = stroke;
     for(int i = 1; i < 8; i++)
     {
         stroke = i;
-        drawStroke(230, 16 * i + 1);
+        drawCStroke(230, 16 * i + 1);
     }
+		color = ctmp;
     stroke = tmp;
 }
