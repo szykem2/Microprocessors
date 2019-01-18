@@ -144,6 +144,7 @@ void drawCStroke(int x, int y);
 
 void getStroke(uint16_t* buf, int pos)
 {
+	pos++;
 	switch(pos)
 	{
 		case 1:
@@ -206,7 +207,7 @@ void drawLayout(void)
 		{
 			if(y == 0 || y == 319 || y == 302 || x == 221 || x == 0 || x == 239)
 				lcdWriteData(LCDBlack);
-			else if(x > 221)
+			else if(x > 221 && y <= 302)
 			{
 				if(y == 17 || y == 34 || y == 51 || y == 68 || y == 85 || y == 102 || y == 118 || y == 212 || y == 268 || y == 285)
 					lcdWriteData(LCDBlack);
@@ -260,7 +261,7 @@ void drawLayout(void)
     for(int i = 1; i < 8; i++)
     {
         stroke = i;
-        drawCStroke(230, 16 * i + 1);
+        drawCStroke(230, 16 * i);
     }
 		color = ctmp;
     stroke = tmp;
